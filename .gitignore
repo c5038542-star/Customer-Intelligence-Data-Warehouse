@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+ 
+# CIDW-specific: generated at runtime, not source
+data/cidw_dw.sqlite
+data/*.sqlite-journal
+data/high_risk_customers.csv
+data/predictive_metrics.json
+images/
+ 
+# Real Kaggle dataset (not ours to redistribute)
+data/online_retail_kaggle.csv
+ 
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+ 
+# Local logs
+*.log
