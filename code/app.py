@@ -5,32 +5,27 @@ CIDW Web Prototype  — an AI-Enabled Customer Intelligence Platform.
 
 A Streamlit application that turns the CIDW data warehouse and predictive
 analytics module into an interactive analytical decision-support prototype
-for user acceptance testing with potential beneficiaries (business
-managers, sales/marketing analysts, business/data analysts).
+for user acceptance testing with potential beneficiaries.
 
-The app has six screens accessible from the left sidebar:
-
+Six screens accessible from the left sidebar:
     1. Overview             high-level KPIs and auto-generated insights
     2. Sales Analytics      revenue trends by month/country/product
     3. Customer Intelligence RFM segments, high-value customers
-    4. Product Analytics    top products by revenue, product trends
+    4. Product Analytics    top products by revenue
     5. AI Predictions       churn risk with explainable AI + clusters
     6. Reports & Insights   auto-generated business insights, downloadable
 
 Run from the project root with:
-
     streamlit run code/app.py
 
 Author: Alexander Ugochukwu Ejiogu (Student No. 35038543)
 MSc Computing Research Project, Sheffield Hallam University, 2026
 """
 
-import io
 import json
 import sqlite3
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -46,7 +41,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Palette (matches dissertation and slide-deck colour scheme)
 NAVY, DEEP, TEAL, MINT, ACCENT = "#21295C", "#065A82", "#1C7293", "#028090", "#B85042"
 
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "cidw_dw.sqlite"
@@ -54,7 +48,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
 # ----------------------------------------------------------------------
-# Custom CSS  — tightens spacing, brands the header, colours KPIs
+# Custom CSS
 # ----------------------------------------------------------------------
 st.markdown(
     f"""
@@ -67,16 +61,22 @@ st.markdown(
             border-left: 5px solid {DEEP};
             padding: 1rem 1.2rem; border-radius: 8px;
         }}
-        div[data-testid="stMetricLabel"] {{ color: {DEEP}; font-weight: 600; }}
-        div[data-testid="stMetricValue"] {{ color: {NAVY}; font-size: 1.8rem; }}
+        div[data-testid="stMetricLabel"] {{ color: {DEEP} !important; font-weight: 600; }}
+        div[data-testid="stMetricValue"] {{ color: {NAVY} !important; font-size: 1.8rem; }}
         .insight-box {{
             background: #E6F1EF; border-left: 5px solid {MINT};
             padding: 1rem 1.2rem; border-radius: 6px; margin: 0.6rem 0;
+            color: #21295C !important;
         }}
+        .insight-box b, .insight-box strong {{ color: #21295C !important; }}
+        .insight-box i, .insight-box em {{ color: #065A82 !important; }}
         .risk-box {{
             background: #FBEDEA; border-left: 5px solid {ACCENT};
             padding: 1rem 1.2rem; border-radius: 6px; margin: 0.6rem 0;
+            color: #21295C !important;
         }}
+        .risk-box b, .risk-box strong {{ color: #B85042 !important; }}
+        .risk-box i, .risk-box em {{ color: #21295C !important; }}
         .stDataFrame {{ font-size: 0.9rem; }}
         section[data-testid="stSidebar"] {{ background: #F5F8FB; }}
         section[data-testid="stSidebar"] h1 {{ font-size: 1.3rem !important; }}
@@ -87,11 +87,10 @@ st.markdown(
 
 
 # ----------------------------------------------------------------------
-# Cached data loaders  — Streamlit caches these across reruns for speed
+# Cached loaders
 # ----------------------------------------------------------------------
 @st.cache_data
 def load_from_sql(query: str) -> pd.DataFrame:
-    """Run a SQL query against the warehouse; cached for performance."""
     conn = sqlite3.connect(DB_PATH)
     try:
         return pd.read_sql(query, conn)
@@ -101,7 +100,6 @@ def load_from_sql(query: str) -> pd.DataFrame:
 
 @st.cache_data
 def load_high_risk_customers() -> pd.DataFrame:
-    """Load pre-computed churn risk CSV if it exists."""
     path = DATA_DIR / "high_risk_customers.csv"
     if path.exists():
         return pd.read_csv(path)
@@ -110,7 +108,6 @@ def load_high_risk_customers() -> pd.DataFrame:
 
 @st.cache_data
 def load_predictive_metrics() -> dict:
-    """Load JSON of predictive metrics if it exists."""
     path = DATA_DIR / "predictive_metrics.json"
     if path.exists():
         return json.loads(path.read_text())
@@ -119,7 +116,6 @@ def load_predictive_metrics() -> dict:
 
 @st.cache_data
 def kpi_summary() -> dict:
-    """Compute the four headline KPIs shown on the Overview screen."""
     q = """
     SELECT
         SUM(CASE WHEN is_return=0 THEN line_total ELSE 0 END) AS total_revenue,
@@ -138,10 +134,10 @@ def kpi_summary() -> dict:
 
 
 # ----------------------------------------------------------------------
-# Sidebar navigation
+# Sidebar
 # ----------------------------------------------------------------------
 with st.sidebar:
-    st.markdown(f"### 📊 CIDW Platform")
+    st.markdown("### 📊 CIDW Platform")
     st.markdown(
         "<span style='color: #555; font-size: 0.85rem;'>"
         "AI-Enabled Customer Intelligence &amp; Business Intelligence Prototype"
@@ -181,29 +177,27 @@ if screen.endswith("Overview"):
     )
     st.markdown("&nbsp;")
 
-    # ---- Headline KPIs ------------------------------------------------
     k = kpi_summary()
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total revenue",       f"£{k['revenue']:,.0f}")
-    c2.metric("Total orders",         f"{k['orders']:,}")
-    c3.metric("Active customers",     f"{k['customers']:,}")
-    c4.metric("Avg. line value",      f"£{k['avg_line']:,.2f}")
+    c1.metric("Total revenue",   f"£{k['revenue']:,.0f}")
+    c2.metric("Total orders",     f"{k['orders']:,}")
+    c3.metric("Active customers", f"{k['customers']:,}")
+    c4.metric("Avg. line value",  f"£{k['avg_line']:,.2f}")
 
     st.markdown("&nbsp;")
 
-    # ---- Revenue trend + Top products side by side --------------------
     c_left, c_right = st.columns([3, 2])
 
     with c_left:
         st.subheader("Revenue trend")
         trend = load_from_sql("""
-            SELECT dd.year_month AS month,
+            SELECT printf('%04d-%02d', dd.year, dd.month_number) AS month,
                    SUM(f.line_total) AS revenue
             FROM fact_sales f
             JOIN dim_date dd ON f.date_key = dd.date_key
             WHERE f.is_return = 0
-            GROUP BY dd.year_month
-            ORDER BY dd.year_month
+            GROUP BY dd.year, dd.month_number
+            ORDER BY dd.year, dd.month_number
         """)
         fig = px.line(trend, x="month", y="revenue", markers=True,
                       color_discrete_sequence=[DEEP])
@@ -222,7 +216,7 @@ if screen.endswith("Overview"):
                    SUM(f.line_total) AS revenue
             FROM fact_sales f
             JOIN dim_product dp ON f.product_key = dp.product_key
-            WHERE f.is_return = 0 AND dp.is_service_code = 0
+            WHERE f.is_return = 0
             GROUP BY dp.description
             ORDER BY revenue DESC LIMIT 5
         """)
@@ -236,7 +230,6 @@ if screen.endswith("Overview"):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    # ---- AI insights section ------------------------------------------
     st.markdown("&nbsp;")
     st.subheader("🤖  AI-generated insights")
 
@@ -299,12 +292,13 @@ elif screen.endswith("Sales Analytics"):
     with tab1:
         st.subheader("Monthly revenue trend")
         trend = load_from_sql("""
-            SELECT dd.year_month AS month,
+            SELECT printf('%04d-%02d', dd.year, dd.month_number) AS month,
                    SUM(f.line_total) AS revenue,
                    COUNT(DISTINCT f.invoice_no) AS orders
             FROM fact_sales f JOIN dim_date dd ON f.date_key = dd.date_key
             WHERE f.is_return = 0
-            GROUP BY dd.year_month ORDER BY dd.year_month
+            GROUP BY dd.year, dd.month_number
+            ORDER BY dd.year, dd.month_number
         """)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=trend["month"], y=trend["revenue"], mode="lines+markers",
@@ -343,11 +337,14 @@ elif screen.endswith("Sales Analytics"):
     with tab3:
         st.subheader("Orders by day of week")
         wkday = load_from_sql("""
-            SELECT dd.day_name AS day, COUNT(DISTINCT f.invoice_no) AS orders
+            SELECT dd.day_of_week AS day, COUNT(DISTINCT f.invoice_no) AS orders
             FROM fact_sales f JOIN dim_date dd ON f.date_key = dd.date_key
             WHERE f.is_return = 0
-            GROUP BY dd.day_name, dd.day_of_week
-            ORDER BY dd.day_of_week
+            GROUP BY dd.day_of_week
+            ORDER BY CASE dd.day_of_week
+              WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+              WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5
+              WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END
         """)
         fig = px.bar(wkday, x="day", y="orders",
                      color_discrete_sequence=[TEAL])
@@ -363,17 +360,20 @@ elif screen.endswith("Customer Intelligence"):
     st.title("Customer Intelligence")
     st.markdown("*RFM-based segmentation and high-value customer profiles.*")
 
-    # ---- Segment distribution -----------------------------------------
+    # RFM computed live from fact_sales joined to dim_customer
     seg = load_from_sql("""
-        SELECT customer_segment AS segment,
-               COUNT(*) AS customers,
-               AVG(monetary_total) AS avg_spend,
-               AVG(frequency) AS avg_orders
-        FROM dim_customer
-        WHERE customer_id != 'GUEST'
-        GROUP BY customer_segment
+        SELECT dc.customer_segment AS segment,
+               COUNT(DISTINCT dc.customer_key) AS customers,
+               COALESCE(SUM(CASE WHEN f.is_return=0 THEN f.line_total END), 0) AS total_spend,
+               COALESCE(COUNT(DISTINCT CASE WHEN f.is_return=0 THEN f.invoice_no END), 0) AS total_orders
+        FROM dim_customer dc
+        LEFT JOIN fact_sales f ON dc.customer_key = f.customer_key
+        WHERE dc.customer_id != 'GUEST'
+        GROUP BY dc.customer_segment
         ORDER BY customers DESC
     """)
+    seg["avg_spend"] = (seg["total_spend"] / seg["customers"]).round(0)
+    seg["avg_orders"] = (seg["total_orders"] / seg["customers"]).round(1)
 
     c1, c2 = st.columns([2, 1])
     with c1:
@@ -386,29 +386,28 @@ elif screen.endswith("Customer Intelligence"):
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         st.subheader("Segment profile")
-        prof = seg.copy()
-        prof["avg_spend"] = prof["avg_spend"].round(0).astype(int).apply(lambda x: f"£{x:,}")
-        prof["avg_orders"] = prof["avg_orders"].round(1)
+        prof = seg[["segment", "customers", "avg_spend", "avg_orders"]].copy()
+        prof["avg_spend"] = prof["avg_spend"].astype(int).apply(lambda x: f"£{x:,}")
         prof.columns = ["Segment", "Customers", "Avg spend", "Avg orders"]
         st.dataframe(prof, use_container_width=True, hide_index=True, height=380)
 
     st.markdown("---")
 
-    # ---- Drill-down ----------------------------------------------------
     st.subheader("Segment drill-down")
-    selected = st.selectbox("Choose a segment to explore:",
-                             seg["segment"].tolist())
+    selected = st.selectbox("Choose a segment to explore:", seg["segment"].tolist())
     drill = load_from_sql(f"""
-        SELECT customer_id AS "Customer ID",
-               country AS "Country",
-               recency_days AS "Recency (days)",
-               frequency AS "Frequency",
-               monetary_total AS "Monetary (£)"
-        FROM dim_customer
-        WHERE customer_segment = '{selected}' AND customer_id != 'GUEST'
-        ORDER BY monetary_total DESC LIMIT 100
+        SELECT dc.customer_id AS "Customer ID",
+               dc.country AS "Country",
+               dc.total_orders AS "Orders",
+               COALESCE(SUM(CASE WHEN f.is_return=0 THEN f.line_total END), 0) AS "Total spend (£)"
+        FROM dim_customer dc
+        LEFT JOIN fact_sales f ON dc.customer_key = f.customer_key
+        WHERE dc.customer_segment = '{selected}' AND dc.customer_id != 'GUEST'
+        GROUP BY dc.customer_key, dc.customer_id, dc.country, dc.total_orders
+        ORDER BY "Total spend (£)" DESC LIMIT 100
     """)
-    st.caption(f"Showing top 100 customers in **{selected}** by monetary value")
+    drill["Total spend (£)"] = drill["Total spend (£)"].round(0).astype(int)
+    st.caption(f"Showing top 100 customers in **{selected}** by total spend")
     st.dataframe(drill, use_container_width=True, hide_index=True, height=350)
 
 
@@ -432,7 +431,7 @@ elif screen.endswith("Product Analytics"):
         SELECT dp.description AS product,
                {metric_sql} AS value
         FROM fact_sales f JOIN dim_product dp ON f.product_key = dp.product_key
-        WHERE f.is_return = 0 AND dp.is_service_code = 0
+        WHERE f.is_return = 0
         GROUP BY dp.description
         ORDER BY value DESC LIMIT {top_n}
     """)
@@ -466,7 +465,6 @@ elif screen.endswith("AI Predictions"):
         ch = metrics.get("churn", {})
         km = metrics.get("kmeans", {})
 
-        # ---- Model performance summary --------------------------------
         st.subheader("📊  Model performance")
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("F1 score",   f"{ch.get('f1', 0):.3f}")
@@ -487,11 +485,8 @@ elif screen.endswith("AI Predictions"):
 
         st.markdown("---")
 
-        # ---- High-risk customers table --------------------------------
         st.subheader("⚠️  Customers at risk of churn")
-        st.markdown(
-            "*Ranked by predicted churn probability, with a plain-English reason.*"
-        )
+        st.markdown("*Ranked by predicted churn probability, with a plain-English reason.*")
 
         n_show = st.slider("Number of customers to show", 10, 50, 20)
 
@@ -516,7 +511,6 @@ elif screen.endswith("AI Predictions"):
 
         st.markdown("---")
 
-        # ---- Explainable AI section -----------------------------------
         st.subheader("🔍  Explainable AI — what drives the churn prediction?")
         feats = sorted(metrics.get("top_features", []),
                        key=lambda x: x["importance_mean"])
@@ -544,7 +538,6 @@ elif screen.endswith("AI Predictions"):
 
         st.markdown("---")
 
-        # ---- K-Means clusters -----------------------------------------
         st.subheader("🎯  Customer clusters (K-Means)")
         st.markdown(
             f"The AI identified **{km.get('k_best', 'N/A')} natural behavioural "
@@ -578,21 +571,27 @@ else:  # Reports & Insights
     risk_df = load_high_risk_customers()
 
     seg = load_from_sql("""
-        SELECT customer_segment AS segment, COUNT(*) AS n,
-               SUM(monetary_total) AS revenue
-        FROM dim_customer
-        WHERE customer_id != 'GUEST'
-        GROUP BY customer_segment ORDER BY revenue DESC
+        SELECT dc.customer_segment AS segment,
+               COUNT(DISTINCT dc.customer_key) AS n,
+               COALESCE(SUM(CASE WHEN f.is_return=0 THEN f.line_total END), 0) AS revenue
+        FROM dim_customer dc
+        LEFT JOIN fact_sales f ON dc.customer_key = f.customer_key
+        WHERE dc.customer_id != 'GUEST'
+        GROUP BY dc.customer_segment
+        ORDER BY revenue DESC
     """)
     top_month = load_from_sql("""
-        SELECT dd.year_month AS month, SUM(f.line_total) AS rev
+        SELECT printf('%04d-%02d', dd.year, dd.month_number) AS month,
+               SUM(f.line_total) AS rev
         FROM fact_sales f JOIN dim_date dd ON f.date_key=dd.date_key
-        WHERE f.is_return=0 GROUP BY dd.year_month ORDER BY rev DESC LIMIT 1
+        WHERE f.is_return=0
+        GROUP BY dd.year, dd.month_number
+        ORDER BY rev DESC LIMIT 1
     """).iloc[0]
     top_product = load_from_sql("""
         SELECT dp.description AS p, SUM(f.line_total) AS r
         FROM fact_sales f JOIN dim_product dp ON f.product_key=dp.product_key
-        WHERE f.is_return=0 AND dp.is_service_code=0
+        WHERE f.is_return=0
         GROUP BY dp.description ORDER BY r DESC LIMIT 1
     """).iloc[0]
     top_country = load_from_sql("""
@@ -601,7 +600,6 @@ else:  # Reports & Insights
         WHERE f.is_return=0 GROUP BY dc.country_name ORDER BY r DESC LIMIT 1
     """).iloc[0]
 
-    # ---- Executive summary --------------------------------------------
     st.subheader("Executive summary")
     st.markdown(f"""
     <div class='insight-box'>
@@ -611,7 +609,6 @@ else:  # Reports & Insights
     </div>
     """, unsafe_allow_html=True)
 
-    # ---- Actionable insights ------------------------------------------
     st.subheader("Actionable insights")
     insights = [
         (f"🏆 <b>Peak sales month:</b> {top_month['month']} generated the highest "
@@ -626,7 +623,8 @@ else:  # Reports & Insights
     ]
     if not seg.empty:
         top_seg = seg.iloc[0]
-        pct = 100 * top_seg["revenue"] / seg["revenue"].sum()
+        total_rev = seg["revenue"].sum()
+        pct = 100 * top_seg["revenue"] / total_rev if total_rev else 0
         insights.append(
             f"👥 <b>Largest revenue segment:</b> \"{top_seg['segment']}\" "
             f"accounts for {pct:.0f}% of total revenue ({int(top_seg['n']):,} "
@@ -651,7 +649,6 @@ else:  # Reports & Insights
 
     st.markdown("---")
 
-    # ---- Download report ----------------------------------------------
     st.subheader("Download report")
     st.markdown("Export a plain-text business report combining all of the above.")
 
