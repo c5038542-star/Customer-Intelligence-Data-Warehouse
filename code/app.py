@@ -80,6 +80,22 @@ st.markdown(
         .stDataFrame {{ font-size: 0.9rem; }}
         section[data-testid="stSidebar"] {{ background: #F5F8FB; }}
         section[data-testid="stSidebar"] h1 {{ font-size: 1.3rem !important; }}
+                    section[data-testid="stSidebar"] .stRadio label {{
+            font-size: 1.15rem !important;
+            padding: 0.5rem 0 !important;
+            color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] .stRadio label p {{
+            font-size: 1.15rem !important;
+            line-height: 1.7 !important;
+            color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] .stRadio label div {{
+            color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] * {{
+            color: #21295C;
+        }}  
     </style>
     """,
     unsafe_allow_html=True,
@@ -137,23 +153,36 @@ def kpi_summary() -> dict:
 # Sidebar
 # ----------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 📊 CIDW Platform")
     st.markdown(
-        "<span style='color: #555; font-size: 0.85rem;'>"
-        "AI-Enabled Customer Intelligence &amp; Business Intelligence Prototype"
-        "</span>",
+        "<div style='font-size: 2.2rem; text-align: center; margin: 0.5rem 0;'>📊</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div style='color: #21295C; font-size: 1.4rem; font-weight: 700; "
+        "text-align: center; line-height: 1.3; margin-bottom: 0.4rem; "
+        "font-family: Cambria, serif;'>"
+        "CIDW Platform"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div style='color: #065A82; font-size: 1.0rem; font-weight: 600; "
+        "text-align: center; line-height: 1.4; margin-bottom: 0.5rem;'>"
+        "AI-Enabled Data Warehousing System for Predictive Customer "
+        "Relationship Management and Business Intelligence"
+        "</div>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
     screen = st.radio(
         "Navigate to:",
         [
-            "🏠  Overview",
-            "💰  Sales Analytics",
-            "👥  Customer Intelligence",
-            "📦  Product Analytics",
-            "🤖  AI Predictions",
-            "📋  Reports & Insights",
+            "🏠   Overview",
+            "💰   Sales Analytics",
+            "👥   Customer Intelligence",
+            "📦   Product Analytics",
+            "🔮   AI Predictions",
+            "📋   Reports & Insights",
         ],
         label_visibility="collapsed",
     )
