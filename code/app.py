@@ -61,8 +61,28 @@ st.markdown(
             border-left: 5px solid {DEEP};
             padding: 1rem 1.2rem; border-radius: 8px;
         }}
-        div[data-testid="stMetricLabel"] {{ color: {DEEP} !important; font-weight: 600; }}
-        div[data-testid="stMetricValue"] {{ color: {NAVY} !important; font-size: 1.8rem; }}
+        div[data-testid="stMetric"] label {{
+            color: {DEEP} !important;
+            font-weight: 700 !important;
+            font-size: 1.0rem !important;
+        }}
+        div[data-testid="stMetric"] label p {{
+            color: {DEEP} !important;
+            font-weight: 700 !important;
+            font-size: 1.0rem !important;
+        }}
+        div[data-testid="stMetricLabel"],
+        div[data-testid="stMetricLabel"] * {{
+            color: {DEEP} !important;
+            font-weight: 700 !important;
+            font-size: 1.0rem !important;
+        }}
+        div[data-testid="stMetricValue"],
+        div[data-testid="stMetricValue"] * {{
+            color: {NAVY} !important;
+            font-size: 2.0rem !important;
+            font-weight: 700 !important;
+        }}
         .insight-box {{
             background: #E6F1EF; border-left: 5px solid {MINT};
             padding: 1rem 1.2rem; border-radius: 6px; margin: 0.6rem 0;
@@ -278,21 +298,21 @@ if screen.endswith("Overview"):
         top_seg = seg.iloc[0]
         pct = 100 * top_seg["n"] / seg["n"].sum()
         insights.append(
-            f"**Largest customer segment:** *{top_seg['segment']}* — "
+            f"Largest customer segment: *{top_seg['segment']}* — "
             f"{int(top_seg['n']):,} customers ({pct:.0f}% of the base)."
         )
     if metrics.get("kmeans"):
         km = metrics["kmeans"]
         insights.append(
-            f"**Customer clustering:** the AI identified "
-            f"**{km['k_best']} natural behavioural groups** in the data "
+            f"Customer clustering: the AI identified "
+            f"*{km['k_best']} natural behavioural groups* in the data "
             f"(silhouette score = {km['silhouette']:.3f})."
         )
     if metrics.get("churn"):
         ch = metrics["churn"]
         insights.append(
-            f"**Churn prediction:** the classifier flags "
-            f"**{len(risk_df)} customers at elevated churn risk**. "
+            f"Churn prediction: the classifier flags "
+            f"*{len(risk_df)} customers at elevated churn risk*. "
             f"Model recall = {ch['recall']:.1%} — it catches roughly "
             f"three-quarters of true churners."
         )
@@ -300,7 +320,7 @@ if screen.endswith("Overview"):
         top_feat = sorted(metrics["top_features"],
                           key=lambda x: -x["importance_mean"])[0]
         insights.append(
-            f"**Key churn driver (Explainable AI):** *{top_feat['feature']}* "
+            f"Key churn driver (Explainable AI): *{top_feat['feature']}* "
             "is the dominant behavioural predictor. Retention effort should "
             "target customers whose order rate is slowing."
         )
