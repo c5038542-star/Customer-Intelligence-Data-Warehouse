@@ -1,0 +1,97 @@
+{
+  "kmeans": {
+    "k_best": 7,
+    "silhouette": 0.4298827464181334,
+    "profiles": {
+      "0": {
+        "customers": 216,
+        "recency_days": 5.0,
+        "frequency": 9.0,
+        "monetary": 1454.52,
+        "avg_order_value": 172.0
+      },
+      "1": {
+        "customers": 279,
+        "recency_days": 143.0,
+        "frequency": 4.0,
+        "monetary": 789.43,
+        "avg_order_value": 190.27
+      },
+      "2": {
+        "customers": 569,
+        "recency_days": 15.0,
+        "frequency": 4.0,
+        "monetary": 656.98,
+        "avg_order_value": 190.32
+      },
+      "3": {
+        "customers": 358,
+        "recency_days": 218.5,
+        "frequency": 2.0,
+        "monetary": 368.21,
+        "avg_order_value": 178.61
+      },
+      "4": {
+        "customers": 76,
+        "recency_days": 3.0,
+        "frequency": 15.0,
+        "monetary": 2727.65,
+        "avg_order_value": 173.92
+      },
+      "5": {
+        "customers": 293,
+        "recency_days": 19.0,
+        "frequency": 2.0,
+        "monetary": 182.15,
+        "avg_order_value": 116.55
+      },
+      "6": {
+        "customers": 102,
+        "recency_days": 297.0,
+        "frequency": 1.0,
+        "monetary": 99.18,
+        "avg_order_value": 86.33
+      }
+    }
+  },
+  "churn": {
+    "precision": 0.47959183673469385,
+    "recall": 0.7540106951871658,
+    "f1": 0.5862785862785863,
+    "roc_auc": 0.66512325551063,
+    "confusion_matrix": [
+      [
+        134,
+        153
+      ],
+      [
+        46,
+        141
+      ]
+    ],
+    "positive_class_rate_train": 0.3953488372093023,
+    "positive_class_rate_test": 0.39451476793248946
+  },
+  "top_features": [
+    {
+      "feature": "return_rate",
+      "importance_mean": 0.002426160337552752,
+      "importance_std": 0.002772877516475733
+    },
+    {
+      "feature": "avg_order_value",
+      "importance_mean": 0.012025316455696228,
+      "importance_std": 0.007250143576978731
+    },
+    {
+      "feature": "monetary",
+      "importance_mean": 0.012341772151898767,
+      "importance_std": 0.01001332143372302
+    },
+    {
+      "feature": "frequency",
+      "importance_mean": 0.07805907172995784,
+      "importance_std": 0.018739593241521055
+    }
+  ]
+}

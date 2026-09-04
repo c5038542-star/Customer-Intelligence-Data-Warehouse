@@ -1,0 +1,69 @@
+{
+  "kmeans": {
+    "k_best": 3,
+    "silhouette": 0.40004251626923665,
+    "profiles": {
+      "0": {
+        "customers": 648,
+        "recency_days": 18.0,
+        "frequency": 11.0,
+        "monetary": 4331.64,
+        "avg_order_value": 409.63
+      },
+      "1": {
+        "customers": 1103,
+        "recency_days": 245.0,
+        "frequency": 1.0,
+        "monetary": 280.55,
+        "avg_order_value": 207.5
+      },
+      "2": {
+        "customers": 2588,
+        "recency_days": 46.0,
+        "frequency": 2.5,
+        "monetary": 724.92,
+        "avg_order_value": 286.83
+      }
+    }
+  },
+  "churn": {
+    "precision": 0.5525423728813559,
+    "recall": 0.7780429594272077,
+    "f1": 0.6461843409316155,
+    "roc_auc": 0.7593530284461072,
+    "confusion_matrix": [
+      [
+        402,
+        264
+      ],
+      [
+        93,
+        326
+      ]
+    ],
+    "positive_class_rate_train": 0.38629379225568533,
+    "positive_class_rate_test": 0.3861751152073733
+  },
+  "top_features": [
+    {
+      "feature": "return_rate",
+      "importance_mean": -0.0001382488479262256,
+      "importance_std": 0.004286209772655747
+    },
+    {
+      "feature": "avg_order_value",
+      "importance_mean": 0.0061751152073733166,
+      "importance_std": 0.00516540323288555
+    },
+    {
+      "feature": "monetary",
+      "importance_mean": 0.032396313364055344,
+      "importance_std": 0.007935237663237945
+    },
+    {
+      "feature": "frequency",
+      "importance_mean": 0.11410138248847931,
+      "importance_std": 0.014268162251455182
+    }
+  ]
+}

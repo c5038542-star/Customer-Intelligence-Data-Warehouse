@@ -1,0 +1,51 @@
+customer_id,customer_segment,country,churn_probability,recency_days,frequency,monetary,risk_reason
+13756,At Risk / Hibernating,United Kingdom,0.8446125443430686,181,3,789.43,has not purchased for 181 days
+13672,At Risk / Hibernating,United Kingdom,0.8424250443430686,206,3,792.19,has not purchased for 206 days
+13627,At Risk / Hibernating,Spain,0.8422040665457199,198,3,786.08,has not purchased for 198 days
+13896,At Risk / Hibernating,Finland,0.8388449451949026,196,3,782.1999999999999,has not purchased for 196 days
+13723,At Risk / Hibernating,France,0.8388449451949026,245,3,777.92,has not purchased for 245 days
+13507,Potential Loyalists,United Kingdom,0.8381076570593095,144,3,774.9499999999999,has not purchased for 144 days
+13632,At Risk / Hibernating,United Kingdom,0.8380402526327501,281,3,765.91,has not purchased for 281 days
+13634,At Risk / Hibernating,United Kingdom,0.8361188043767265,183,3,796.5,has not purchased for 183 days
+13824,At Risk / Hibernating,Switzerland,0.8358219427735952,275,3,770.13,has not purchased for 275 days
+12991,Loyal Customers,Norway,0.8346703097081246,10,3,785.5,short customer tenure
+13390,Potential Loyalists,Norway,0.8316252404407425,148,3,760.7,has not purchased for 148 days
+13443,Potential Loyalists,United Kingdom,0.8303651661230883,132,3,803.18,has not purchased for 132 days
+13479,Potential Loyalists,United Kingdom,0.8270272423233253,128,3,763.43,has not purchased for 128 days
+13422,At Risk / Hibernating,United Kingdom,0.8218215020502196,165,3,754.38,has not purchased for 165 days
+13546,Potential Loyalists,Belgium,0.8193605890943553,140,3,748.76,has not purchased for 140 days
+13890,At Risk / Hibernating,Sweden,0.8177826866190149,191,3,923.76,has not purchased for 191 days
+13339,At Risk / Hibernating,France,0.8168471196087057,154,3,917.36,has not purchased for 154 days
+13470,Potential Loyalists,Spain,0.8159901767631708,136,3,801.68,has not purchased for 136 days
+13460,At Risk / Hibernating,France,0.8152673615524604,166,3,927.13,has not purchased for 166 days
+13488,Potential Loyalists,Spain,0.8149396520762382,138,3,913.13,has not purchased for 138 days
+13802,At Risk / Hibernating,Spain,0.8142253663619524,196,3,910.3,has not purchased for 196 days
+13417,Potential Loyalists,United Kingdom,0.8100557250357443,129,3,745.77,has not purchased for 129 days
+13151,Loyal Customers,Netherlands,0.8050557250357443,38,3,743.02,short customer tenure
+13313,At Risk / Hibernating,United Kingdom,0.8047116794218608,153,3,971.6,has not purchased for 153 days
+13521,At Risk / Hibernating,France,0.7915939166767931,185,3,1118.95,has not purchased for 185 days
+13908,At Risk / Hibernating,Belgium,0.789498360272413,213,3,1113.75,has not purchased for 213 days
+13718,At Risk / Hibernating,Australia,0.7848984146294551,182,3,1104.98,has not purchased for 182 days
+13610,At Risk / Hibernating,United Kingdom,0.7848357468225395,291,3,1015.7,has not purchased for 291 days
+13253,Potential Loyalists,United Kingdom,0.7800390297864392,138,6,1049.66,has not purchased for 138 days
+13463,Potential Loyalists,Australia,0.7800390297864392,126,6,1047.73,has not purchased for 126 days
+13561,Potential Loyalists,United Kingdom,0.777775419471253,141,6,1050.79,has not purchased for 141 days
+13372,Potential Loyalists,Australia,0.7771818869292965,141,6,1044.66,has not purchased for 141 days
+13090,Loyal Customers,United Kingdom,0.7743240608521045,5,3,829.5,short customer tenure
+13665,At Risk / Hibernating,United Kingdom,0.7743240608521045,289,3,831.62,has not purchased for 289 days
+13573,At Risk / Hibernating,United Kingdom,0.7723483777483823,203,3,839.55,has not purchased for 203 days
+13360,Potential Loyalists,Netherlands,0.7702066448685752,143,3,996.49,has not purchased for 143 days
+13474,Potential Loyalists,United Kingdom,0.7700665595665641,143,3,843.04,has not purchased for 143 days
+13217,Potential Loyalists,United Kingdom,0.7679832262332309,137,3,844.51,has not purchased for 137 days
+13594,At Risk / Hibernating,Channel Islands,0.7664666103738373,243,3,727.6899999999999,has not purchased for 243 days
+13549,Potential Loyalists,United Kingdom,0.7651730967307422,125,6,1057.81,has not purchased for 125 days
+13226,Potential Loyalists,United Kingdom,0.7639388069988362,127,6,972.46,has not purchased for 127 days
+13340,At Risk / Hibernating,United Kingdom,0.7639388069988362,216,6,970.73,has not purchased for 216 days
+13322,At Risk / Hibernating,EIRE,0.7639388069988362,166,6,968.9,has not purchased for 166 days
+13719,At Risk / Hibernating,Germany,0.7625766986755101,230,3,726.76,has not purchased for 230 days
+13281,Potential Loyalists,United Kingdom,0.7624402075590604,123,6,981.03,has not purchased for 123 days
+12806,Loyal Customers,United Kingdom,0.7622291445355319,14,3,728.74,short customer tenure
+13243,Potential Loyalists,Norway,0.7613290964479492,137,6,990.43,has not purchased for 137 days
+13074,Loyal Customers,United Kingdom,0.7608147131592148,4,3,1005.8199999999999,short customer tenure
+13508,At Risk / Hibernating,United Kingdom,0.7606969981663997,182,6,996.91,has not purchased for 182 days
+13181,Loyal Customers,Germany,0.756756004822347,61,3,984.7,borderline profile
