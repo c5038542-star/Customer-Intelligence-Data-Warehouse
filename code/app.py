@@ -43,8 +43,22 @@ st.set_page_config(
 
 NAVY, DEEP, TEAL, MINT, ACCENT = "#21295C", "#065A82", "#1C7293", "#028090", "#B85042"
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "cidw_dw.sqlite"
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+
+DATASET_OPTIONS = {
+    "Synthetic (validation)": {
+        "db":        DATA_DIR / "cidw_dw_synthetic.sqlite",
+        "risk_csv":  DATA_DIR / "high_risk_customers_synthetic.csv",
+        "metrics":   DATA_DIR / "predictive_metrics_synthetic.json",
+        "description": "35,533-row synthetic twin with injected DQ faults (174 duplicates, 530 missing IDs, 106 zero-prices). Ground-truth validation dataset.",
+    },
+    "UCI Online Retail (real)": {
+        "db":        DATA_DIR / "cidw_dw_uci.sqlite",
+        "risk_csv":  DATA_DIR / "high_risk_customers_uci.csv",
+        "metrics":   DATA_DIR / "predictive_metrics_uci.json",
+        "description": "541,909-row real dataset from a UK-based online retailer (Chen, 2015 — UCI ML Repository, CC BY 4.0). Dec 2010 – Dec 2011.",
+    },
+}
 
 
 # ----------------------------------------------------------------------
@@ -116,6 +130,49 @@ st.markdown(
         section[data-testid="stSidebar"] * {{
             color: #21295C;
         }}  
+                section[data-testid="stSidebar"] .stSelectbox label {{
+            color: #B85042 !important;
+            font-weight: 700 !important;
+        }}
+        section[data-testid="stSidebar"] .stSelectbox > div {{
+            background-color: #FFFFFF !important;
+        }}
+        section[data-testid="stSidebar"] .stSelectbox > div > div {{
+            background-color: #FFFFFF !important;
+        }}
+        section[data-testid="stSidebar"] .stSelectbox div {{
+            background-color: #FFFFFF !important;
+            color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] .stSelectbox input {{
+            color: #21295C !important;
+            background-color: #FFFFFF !important;
+            -webkit-text-fill-color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] .stSelectbox span {{
+            color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] .stSelectbox svg {{
+            fill: #21295C !important;
+        }}
+        section[data-testid="stSelectbox"] div[role="listbox"] {{
+            background-color: #FFFFFF !important;
+        }}
+        section[data-testid="stSelectbox"] div[role="listbox"] * {{
+            color: #21295C !important;
+        }}
+        div[data-baseweb="popover"] div[role="listbox"] {{
+            background-color: #FFFFFF !important;
+        }}
+        div[data-baseweb="popover"] div[role="listbox"] * {{
+            color: #21295C !important;
+        }}
+        section[data-testid="stSidebar"] .stCaption,
+        section[data-testid="stSidebar"] .stCaption * {{
+            color: #21295C !important;
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
+        }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -126,25 +183,45 @@ st.markdown(
 # Cached loaders
 # ----------------------------------------------------------------------
 @st.cache_data
-def load_from_sql(query: str) -> pd.DataFrame:
-    conn = sqlite3.connect(DB_PATH)
+def load_from_sql(query: str, db_path: str) -> pd.DataFrame:
+    conn = sqlite3.connect(db_path)
     try:
         return pd.read_sql(query, conn)
     finally:
         conn.close()
 
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
+DATASET_OPTIONS = {
+    "Synthetic (validation)": {
+        "db":        DATA_DIR / "cidw_dw_synthetic.sqlite",
+        "risk_csv":  DATA_DIR / "high_risk_customers_synthetic.csv",
+        "metrics":   DATA_DIR / "predictive_metrics_synthetic.json",
+        "description": "35,533-row synthetic twin with injected DQ faults (174 duplicates, 530 missing IDs, 106 zero-prices). Ground-truth validation dataset.",
+    },
+    "UCI Online Retail (real)": {
+        "db":        DATA_DIR / "cidw_dw_uci.sqlite",
+        "risk_csv":  DATA_DIR / "high_risk_customers_uci.csv",
+        "metrics":   DATA_DIR / "predictive_metrics_uci.json",
+        "description": "541,909-row real dataset from a UK-based online retailer (Chen, 2015 — UCI ML Repository, CC BY 4.0). Dec 2010 – Dec 2011.",
+    },
+}
+
+
+# ----------------------------------------------------------------------
+# Cached loaders
+# ----------------------------------------------------------------------
 @st.cache_data
-def load_high_risk_customers() -> pd.DataFrame:
-    path = DATA_DIR / "high_risk_customers.csv"
+def load_high_risk_customers(path_str: str) -> pd.DataFrame:
+    path = Path(path_str)
     if path.exists():
         return pd.read_csv(path)
     return pd.DataFrame()
 
 
 @st.cache_data
-def load_predictive_metrics() -> dict:
-    path = DATA_DIR / "predictive_metrics.json"
+def load_predictive_metrics(path_str: str) -> dict:
+    path = Path(path_str)
     if path.exists():
         return json.loads(path.read_text())
     return {}
@@ -160,7 +237,7 @@ def kpi_summary() -> dict:
         AVG(CASE WHEN is_return=0 THEN line_total ELSE NULL END) AS avg_line_value
     FROM fact_sales
     """
-    row = load_from_sql(q).iloc[0]
+    row = load_from_sql(q, str(DB_PATH)).iloc[0]
     return {
         "revenue": float(row["total_revenue"] or 0),
         "orders": int(row["total_orders"] or 0),
@@ -168,6 +245,35 @@ def kpi_summary() -> dict:
         "avg_line": float(row["avg_line_value"] or 0),
     }
 
+# ----------------------------------------------------------------------
+# Dataset selector 
+# ----------------------------------------------------------------------
+with st.sidebar:
+    st.markdown(
+        "<div style='color: #B85042; font-weight: 700; font-size: 0.95rem; "
+        "margin: 0.3rem 0 0.2rem 0;'>DATASET</div>",
+        unsafe_allow_html=True,
+    )
+    dataset_choice = st.selectbox(
+        "Choose dataset",
+        list(DATASET_OPTIONS.keys()),
+        label_visibility="collapsed",
+        key="dataset_selector",
+    )
+    # Clear caches whenever the dataset changes
+    if "prev_dataset" not in st.session_state:
+        st.session_state.prev_dataset = dataset_choice
+    if st.session_state.prev_dataset != dataset_choice:
+        st.cache_data.clear()
+        st.session_state.prev_dataset = dataset_choice
+    dataset = DATASET_OPTIONS[dataset_choice]
+    st.caption(dataset["description"])
+    st.markdown("---")
+
+# Now switch the paths the loaders will use
+DB_PATH = dataset["db"]
+RISK_CSV_PATH = dataset["risk_csv"]
+METRICS_PATH = dataset["metrics"]
 
 # ----------------------------------------------------------------------
 # Sidebar
@@ -247,7 +353,7 @@ if screen.endswith("Overview"):
             WHERE f.is_return = 0
             GROUP BY dd.year, dd.month_number
             ORDER BY dd.year, dd.month_number
-        """)
+        """, str(DB_PATH))
         fig = px.line(trend, x="month", y="revenue", markers=True,
                       color_discrete_sequence=[DEEP])
         fig.update_layout(
@@ -268,7 +374,7 @@ if screen.endswith("Overview"):
             WHERE f.is_return = 0
             GROUP BY dp.description
             ORDER BY revenue DESC LIMIT 5
-        """)
+        """, str(DB_PATH))
         top["product"] = top["product"].str[:35]
         fig = px.bar(top, x="revenue", y="product", orientation="h",
                      color_discrete_sequence=[TEAL])
@@ -282,8 +388,8 @@ if screen.endswith("Overview"):
     st.markdown("&nbsp;")
     st.subheader("🤖  AI-generated insights")
 
-    metrics = load_predictive_metrics()
-    risk_df = load_high_risk_customers()
+    metrics = load_predictive_metrics(str(METRICS_PATH))
+    risk_df = load_high_risk_customers(str(RISK_CSV_PATH))
 
     seg = load_from_sql("""
         SELECT customer_segment AS segment, COUNT(*) AS n
@@ -291,7 +397,7 @@ if screen.endswith("Overview"):
         WHERE customer_id != 'GUEST'
         GROUP BY customer_segment
         ORDER BY n DESC
-    """)
+    """, str(DB_PATH))
 
     insights = []
     if not seg.empty:
@@ -348,7 +454,7 @@ elif screen.endswith("Sales Analytics"):
             WHERE f.is_return = 0
             GROUP BY dd.year, dd.month_number
             ORDER BY dd.year, dd.month_number
-        """)
+        """, str(DB_PATH))
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=trend["month"], y=trend["revenue"], mode="lines+markers",
                                  name="Revenue (£)", line=dict(color=DEEP, width=3),
@@ -375,7 +481,7 @@ elif screen.endswith("Sales Analytics"):
             WHERE f.is_return = 0
             GROUP BY dc.country_name
             ORDER BY revenue DESC LIMIT {top_n}
-        """)
+        """, str(DB_PATH))
         fig = px.bar(country, x="country", y="revenue", color="revenue",
                      color_continuous_scale=["#B8CDE3", DEEP, NAVY])
         fig.update_layout(height=420, margin=dict(l=10, r=10, t=20, b=10),
@@ -394,7 +500,7 @@ elif screen.endswith("Sales Analytics"):
               WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
               WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5
               WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END
-        """)
+        """, str(DB_PATH))
         fig = px.bar(wkday, x="day", y="orders",
                      color_discrete_sequence=[TEAL])
         fig.update_layout(height=380, margin=dict(l=10, r=10, t=20, b=10),
@@ -420,7 +526,7 @@ elif screen.endswith("Customer Intelligence"):
         WHERE dc.customer_id != 'GUEST'
         GROUP BY dc.customer_segment
         ORDER BY customers DESC
-    """)
+    """, str(DB_PATH))
     seg["avg_spend"] = (seg["total_spend"] / seg["customers"]).round(0)
     seg["avg_orders"] = (seg["total_orders"] / seg["customers"]).round(1)
 
@@ -454,7 +560,7 @@ elif screen.endswith("Customer Intelligence"):
         WHERE dc.customer_segment = '{selected}' AND dc.customer_id != 'GUEST'
         GROUP BY dc.customer_key, dc.customer_id, dc.country, dc.total_orders
         ORDER BY "Total spend (£)" DESC LIMIT 100
-    """)
+    """, str(DB_PATH))
     drill["Total spend (£)"] = drill["Total spend (£)"].round(0).astype(int)
     st.caption(f"Showing top 100 customers in **{selected}** by total spend")
     st.dataframe(drill, use_container_width=True, hide_index=True, height=350)
@@ -483,7 +589,7 @@ elif screen.endswith("Product Analytics"):
         WHERE f.is_return = 0
         GROUP BY dp.description
         ORDER BY value DESC LIMIT {top_n}
-    """)
+    """, str(DB_PATH))
     prod["product"] = prod["product"].str[:45]
 
     fig = px.bar(prod, x="value", y="product", orientation="h",
@@ -502,8 +608,8 @@ elif screen.endswith("AI Predictions"):
     st.title("AI Predictions  — Churn Risk & Explainable AI")
     st.markdown("*Machine-learning-driven predictions with plain-English reasoning.*")
 
-    metrics = load_predictive_metrics()
-    risk_df = load_high_risk_customers()
+    metrics = load_predictive_metrics(str(METRICS_PATH))
+    risk_df = load_high_risk_customers(str(RISK_CSV_PATH))
 
     if risk_df.empty or not metrics:
         st.warning(
@@ -616,8 +722,8 @@ else:  # Reports & Insights
     st.markdown("*Auto-generated business insights ready to act on.*")
 
     k = kpi_summary()
-    metrics = load_predictive_metrics()
-    risk_df = load_high_risk_customers()
+    metrics = load_predictive_metrics(str(METRICS_PATH))
+    risk_df = load_high_risk_customers(str(RISK_CSV_PATH))
 
     seg = load_from_sql("""
         SELECT dc.customer_segment AS segment,
@@ -628,7 +734,7 @@ else:  # Reports & Insights
         WHERE dc.customer_id != 'GUEST'
         GROUP BY dc.customer_segment
         ORDER BY revenue DESC
-    """)
+    """, str(DB_PATH))
     top_month = load_from_sql("""
         SELECT printf('%04d-%02d', dd.year, dd.month_number) AS month,
                SUM(f.line_total) AS rev
@@ -636,18 +742,18 @@ else:  # Reports & Insights
         WHERE f.is_return=0
         GROUP BY dd.year, dd.month_number
         ORDER BY rev DESC LIMIT 1
-    """).iloc[0]
+    """, str(DB_PATH)).iloc[0]
     top_product = load_from_sql("""
         SELECT dp.description AS p, SUM(f.line_total) AS r
         FROM fact_sales f JOIN dim_product dp ON f.product_key=dp.product_key
         WHERE f.is_return=0
         GROUP BY dp.description ORDER BY r DESC LIMIT 1
-    """).iloc[0]
+    """, str(DB_PATH)).iloc[0]
     top_country = load_from_sql("""
         SELECT dc.country_name AS c, SUM(f.line_total) AS r
         FROM fact_sales f JOIN dim_country dc ON f.country_key=dc.country_key
         WHERE f.is_return=0 GROUP BY dc.country_name ORDER BY r DESC LIMIT 1
-    """).iloc[0]
+    """, str(DB_PATH)).iloc[0]
 
     st.subheader("Executive summary")
     st.markdown(f"""
