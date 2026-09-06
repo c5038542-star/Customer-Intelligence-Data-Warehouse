@@ -45,6 +45,76 @@ NAVY, DEEP, TEAL, MINT, ACCENT = "#21295C", "#065A82", "#1C7293", "#028090", "#B
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
+# ----------------------------------------------------------------------
+# Auto-build warehouse and ML outputs if missing (for Streamlit Cloud)
+# ----------------------------------------------------------------------
+import subprocess
+import sys
+
+CODE_DIR = Path(__file__).resolve().parent
+
+def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metrics_target):
+    """If the SQLite/CSV/JSON outputs are missing, rebuild them from source."""
+    if db_target.exists() and risk_target.exists() and metrics_target.exists():
+        return  # already built
+
+    source_path = DATA_DIR / source_csv
+    if not source_path.exists():
+        # Source CSV also missing — nothing we can do
+        return
+
+    with st.spinner(f"First-time setup: building {dataset_label} warehouse (30-60 seconds)..."):
+        try:
+            # Run ETL against the source CSV
+            subprocess.run(
+                [sys.executable, str(CODE_DIR / "etl_pipeline_demo.py"),
+                 str(source_path)],
+                cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=120,
+            )
+            # ETL writes to data/cidw_dw.sqlite — rename to target
+            default_db = DATA_DIR / "cidw_dw.sqlite"
+            if default_db.exists() and default_db != db_target:
+                default_db.rename(db_target)
+
+            # Run ML pipeline
+            subprocess.run(
+                [sys.executable, str(CODE_DIR / "predictive_analytics.py")],
+                cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=180,
+            )
+            # ML writes to data/high_risk_customers.csv and data/predictive_metrics.json — rename
+            for src_name, dst in [
+                ("high_risk_customers.csv", risk_target),
+                ("predictive_metrics.json", metrics_target),
+            ]:
+                src = DATA_DIR / src_name
+                if src.exists() and src != dst:
+                    src.rename(dst)
+        except subprocess.CalledProcessError as e:
+            st.error(f"Failed to build {dataset_label} warehouse: {e.stderr[:500]}")
+            st.stop()
+        except subprocess.TimeoutExpired:
+            st.error(f"Building {dataset_label} warehouse timed out.")
+            st.stop()
+
+# Build synthetic (always attempt — it's small and fast)
+ensure_dataset_built(
+    "synthetic",
+    "online_retail_synthetic.csv",
+    DATA_DIR / "cidw_dw_synthetic.sqlite",
+    DATA_DIR / "high_risk_customers_synthetic.csv",
+    DATA_DIR / "predictive_metrics_synthetic.json",
+)
+
+# Build UCI only if the source CSV is present (it's 46 MB and may not be in repo)
+if (DATA_DIR / "online_retail_uci.csv").exists():
+    ensure_dataset_built(
+        "UCI",
+        "online_retail_uci.csv",
+        DATA_DIR / "cidw_dw_uci.sqlite",
+        DATA_DIR / "high_risk_customers_uci.csv",
+        DATA_DIR / "predictive_metrics_uci.json",
+    )
+    
 DATASET_OPTIONS = {
     "Synthetic (validation)": {
         "db":        DATA_DIR / "cidw_dw_synthetic.sqlite",
