@@ -22,6 +22,9 @@ Author: Alexander Ugochukwu Ejiogu (Student No. 35038543)
 MSc Computing Research Project, Sheffield Hallam University, 2026
 """
 
+import subprocess
+import sys
+import os
 import json
 import sqlite3
 from pathlib import Path
