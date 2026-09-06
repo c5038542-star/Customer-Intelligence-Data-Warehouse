@@ -59,46 +59,39 @@ CODE_DIR = Path(__file__).resolve().parent
 def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metrics_target):
     """If the SQLite/CSV/JSON outputs are missing, rebuild them from source."""
     # Check if all outputs exist AND the db actually has the fact_sales table
-if db_target.exists() and risk_target.exists() and metrics_target.exists():
-    try:
-        import sqlite3 as _sq
-        conn = _sq.connect(str(db_target))
-        row_count = conn.execute("SELECT COUNT(*) FROM fact_sales").fetchone()[0]
-        conn.close()
-        if row_count > 0:
-            return  # genuinely already built
-        else:
-            # DB exists but is empty — delete it and rebuild
-            db_target.unlink()
-    except Exception:
-        # DB exists but is corrupt — delete and rebuild
-        if db_target.exists():
-            db_target.unlink()
+    if db_target.exists() and risk_target.exists() and metrics_target.exists():
+        try:
+            import sqlite3 as _sq
+            conn = _sq.connect(str(db_target))
+            row_count = conn.execute("SELECT COUNT(*) FROM fact_sales").fetchone()[0]
+            conn.close()
+            if row_count > 0:
+                return  # genuinely already built
+            else:
+                db_target.unlink()
+        except Exception:
+            if db_target.exists():
+                db_target.unlink()
 
     source_path = DATA_DIR / source_csv
     if not source_path.exists():
-        # Source CSV also missing — nothing we can do
         return
 
-    with st.spinner(f"First-time setup: building {dataset_label} warehouse (30-60 seconds)..."):
+    with st.spinner(f"First-time setup: building {dataset_label} warehouse (this takes 30-90 seconds)..."):
         try:
-            # Run ETL against the source CSV
             subprocess.run(
                 [sys.executable, str(CODE_DIR / "etl_pipeline_demo.py"),
                  str(source_path)],
                 cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=600,
             )
-            # ETL writes to data/cidw_dw.sqlite — rename to target
             default_db = DATA_DIR / "cidw_dw.sqlite"
             if default_db.exists() and default_db != db_target:
                 default_db.rename(db_target)
 
-            # Run ML pipeline
             subprocess.run(
                 [sys.executable, str(CODE_DIR / "predictive_analytics.py")],
                 cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=600,
             )
-            # ML writes to data/high_risk_customers.csv and data/predictive_metrics.json — rename
             for src_name, dst in [
                 ("high_risk_customers.csv", risk_target),
                 ("predictive_metrics.json", metrics_target),
@@ -108,16 +101,21 @@ if db_target.exists() and risk_target.exists() and metrics_target.exists():
                     src.rename(dst)
         except subprocess.CalledProcessError as e:
             st.error(f"Failed to build {dataset_label} warehouse.")
-        with st.expander("Error details (for debugging)"):
-            st.code(f"STDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}", language="text")
+            with st.expander("Error details (for debugging)"):
+                st.code(f"STDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}", language="text")
             st.stop()
-        except subprocess.CalledProcessError as e:
-            st.error(f"Failed to build {dataset_label} warehouse.")
-       with st.expander("Error details (for debugging)"):
-            st.code(f"STDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}", language="text")
+        except subprocess.TimeoutExpired:
+            st.error(f"Building {dataset_label} warehouse timed out.")
             st.stop()
 
-# Build synthetic (always attempt — it's small and fast)
+
+# Detect whether we are running on Streamlit Cloud
+IS_CLOUD = (
+    os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
+    or "/mount/src" in str(CODE_DIR)
+)
+
+# Build synthetic (fast — even on cloud)
 ensure_dataset_built(
     "synthetic",
     "online_retail_synthetic.csv",
@@ -126,9 +124,15 @@ ensure_dataset_built(
     DATA_DIR / "predictive_metrics_synthetic.json",
 )
 
-# Build UCI only when running locally (not on cloud, where the build times out)
-IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true" or "streamlit" in os.environ.get("HOME", "").lower() or "/mount/src" in str(CODE_DIR)
-
+# Build UCI only when running locally
+if not IS_CLOUD and (DATA_DIR / "online_retail_uci.csv").exists():
+    ensure_dataset_built(
+        "UCI",
+        "online_retail_uci.csv",
+        DATA_DIR / "cidw_dw_uci.sqlite",
+        DATA_DIR / "high_risk_customers_uci.csv",
+        DATA_DIR / "predictive_metrics_uci.json",
+    )
 if not IS_CLOUD and (DATA_DIR / "online_retail_uci.csv").exists():
     ensure_dataset_built(
         "UCI",
