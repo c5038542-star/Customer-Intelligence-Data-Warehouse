@@ -58,8 +58,22 @@ CODE_DIR = Path(__file__).resolve().parent
 
 def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metrics_target):
     """If the SQLite/CSV/JSON outputs are missing, rebuild them from source."""
-    if db_target.exists() and risk_target.exists() and metrics_target.exists():
-        return  # already built
+    # Check if all outputs exist AND the db actually has the fact_sales table
+if db_target.exists() and risk_target.exists() and metrics_target.exists():
+    try:
+        import sqlite3 as _sq
+        conn = _sq.connect(str(db_target))
+        row_count = conn.execute("SELECT COUNT(*) FROM fact_sales").fetchone()[0]
+        conn.close()
+        if row_count > 0:
+            return  # genuinely already built
+        else:
+            # DB exists but is empty — delete it and rebuild
+            db_target.unlink()
+    except Exception:
+        # DB exists but is corrupt — delete and rebuild
+        if db_target.exists():
+            db_target.unlink()
 
     source_path = DATA_DIR / source_csv
     if not source_path.exists():
@@ -93,10 +107,14 @@ def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metr
                 if src.exists() and src != dst:
                     src.rename(dst)
         except subprocess.CalledProcessError as e:
-            st.error(f"Failed to build {dataset_label} warehouse: {e.stderr[:500]}")
+            st.error(f"Failed to build {dataset_label} warehouse.")
+        with st.expander("Error details (for debugging)"):
+            st.code(f"STDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}", language="text")
             st.stop()
-        except subprocess.TimeoutExpired:
-            st.error(f"Building {dataset_label} warehouse timed out.")
+        except subprocess.CalledProcessError as e:
+            st.error(f"Failed to build {dataset_label} warehouse.")
+       with st.expander("Error details (for debugging)"):
+            st.code(f"STDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}", language="text")
             st.stop()
 
 # Build synthetic (always attempt — it's small and fast)
