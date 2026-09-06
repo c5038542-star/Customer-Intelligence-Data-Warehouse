@@ -69,7 +69,7 @@ def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metr
             subprocess.run(
                 [sys.executable, str(CODE_DIR / "etl_pipeline_demo.py"),
                  str(source_path)],
-                cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=120,
+                cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=600,
             )
             # ETL writes to data/cidw_dw.sqlite — rename to target
             default_db = DATA_DIR / "cidw_dw.sqlite"
@@ -79,7 +79,7 @@ def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metr
             # Run ML pipeline
             subprocess.run(
                 [sys.executable, str(CODE_DIR / "predictive_analytics.py")],
-                cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=180,
+                cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=600,
             )
             # ML writes to data/high_risk_customers.csv and data/predictive_metrics.json — rename
             for src_name, dst in [
@@ -105,8 +105,10 @@ ensure_dataset_built(
     DATA_DIR / "predictive_metrics_synthetic.json",
 )
 
-# Build UCI only if the source CSV is present (it's 46 MB and may not be in repo)
-if (DATA_DIR / "online_retail_uci.csv").exists():
+# Build UCI only when running locally (not on cloud, where the build times out)
+IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true" or "streamlit" in os.environ.get("HOME", "").lower() or "/mount/src" in str(CODE_DIR)
+
+if not IS_CLOUD and (DATA_DIR / "online_retail_uci.csv").exists():
     ensure_dataset_built(
         "UCI",
         "online_retail_uci.csv",
@@ -114,7 +116,7 @@ if (DATA_DIR / "online_retail_uci.csv").exists():
         DATA_DIR / "high_risk_customers_uci.csv",
         DATA_DIR / "predictive_metrics_uci.json",
     )
-    
+
 DATASET_OPTIONS = {
     "Synthetic (validation)": {
         "db":        DATA_DIR / "cidw_dw_synthetic.sqlite",
