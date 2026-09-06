@@ -79,25 +79,34 @@ def ensure_dataset_built(dataset_label, source_csv, db_target, risk_target, metr
 
     with st.spinner(f"First-time setup: building {dataset_label} warehouse (this takes 30-90 seconds)..."):
         try:
+            # Step 1: Run ETL — writes to data/cidw_dw.sqlite (fixed path)
             subprocess.run(
                 [sys.executable, str(CODE_DIR / "etl_pipeline_demo.py"),
                  str(source_path)],
                 cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=600,
             )
-            default_db = DATA_DIR / "cidw_dw.sqlite"
-            if default_db.exists() and default_db != db_target:
-                default_db.rename(db_target)
 
+            # Step 2: Run ML BEFORE renaming — it also reads from data/cidw_dw.sqlite
             subprocess.run(
                 [sys.executable, str(CODE_DIR / "predictive_analytics.py")],
                 cwd=str(CODE_DIR), check=True, capture_output=True, text=True, timeout=600,
             )
+
+            # Step 3: Now rename ALL outputs to the dataset-specific names
+            default_db = DATA_DIR / "cidw_dw.sqlite"
+            if default_db.exists() and default_db != db_target:
+                if db_target.exists():
+                    db_target.unlink()
+                default_db.rename(db_target)
+
             for src_name, dst in [
                 ("high_risk_customers.csv", risk_target),
                 ("predictive_metrics.json", metrics_target),
             ]:
                 src = DATA_DIR / src_name
                 if src.exists() and src != dst:
+                    if dst.exists():
+                        dst.unlink()
                     src.rename(dst)
         except subprocess.CalledProcessError as e:
             st.error(f"Failed to build {dataset_label} warehouse.")
